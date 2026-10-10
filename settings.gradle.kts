@@ -6,4 +6,4 @@
  */
 
 rootProject.name = "MuniAPI"
-include("plugin")
+include("plugin", "paper")

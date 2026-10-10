@@ -1,0 +1,9 @@
+# This file contains the necessary metadata for Paper to identify and run the mod. These values are replaced
+# by the corresponding properties in gradle.properties during compilation.
+
+name: muniapi
+version: 1.0.0
+main: com.github.umbra.muniapi.paper.PaperEntrypoint
+description: Test descroption
+author: Umbra
+api-version: 26.3
