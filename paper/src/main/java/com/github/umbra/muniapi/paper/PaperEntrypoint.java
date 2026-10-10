@@ -1,5 +1,10 @@
 package com.github.umbra.muniapi.paper;
 
-public class PaperEntrypoint {
+import org.bukkit.plugin.java.JavaPlugin;
 
+public class PaperEntrypoint extends JavaPlugin {
+    @Override
+    public void onEnable() {
+        getLogger().info("Hello Paper!");
+    }
 }
