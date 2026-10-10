@@ -3,29 +3,48 @@
  */
 package com.github.umbra.muniapi
 
+import com.github.umbra.muniapi.tasks.ExtractRuntimeTask
 import org.gradle.api.Project
 import org.gradle.api.Plugin
+import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.bundling.Jar
+import org.gradle.api.tasks.TaskAction
 
 /**
  * A simple 'hello world' plugin.
  */
 class MuniAPIPlugin: Plugin<Project> {
     override fun apply(project: Project) {
-        // Makes sure that the consumer has the Java plugin applied
-        project.plugins.apply(JavaPlugin::class.java)
-        
-        // Define the location of the paper subproject
-        val subCoordinates = "com.github.umbra:my-plugin-sub:" +
-            (MuniAPIPlugin::class.java.`package`.implementationVersion ?: "1.0.0")
-        
-        project.dependencies.add("compileOnly", subCoordinates)
-        project.dependencies.add("testImplementation", subCoordinates)
-        
         // Register a task
         project.tasks.register("greeting") { task ->
             task.doLast {
-                println("Hello from plugin 'org.example.greeting'")
+                println("Hello from plugin 'com.github.umbra.muni-api'")
+            }
+        }
+        
+        val extract = project.tasks.register("extractRuntime", ExtractRuntimeTask::class.java) {
+            it.outputJar.set(project.layout.buildDirectory.file("plugin/sub.jar"))
+        }
+        
+        project.plugins.withType(JavaPlugin::class.java) { 
+            project.dependencies.add("implementation", project.files(extract.map { it.outputJar }).builtBy(extract))
+            
+            val main = project.extensions
+                .getByType(SourceSetContainer::class.java)
+                .getByName("main")
+            
+            val bundled = project.tasks.register("bundledJar", Jar::class.java) {
+                it.archiveClassifier.set("bundled")
+                it.dependsOn(extract)
+                it.duplicatesStrategy = DuplicatesStrategy.INCLUDE
+                it.from(main.output)
+                it.from(project.provider { project.zipTree(extract.get().outputJar) })
+            }
+            
+            project.tasks.named("build").configure {
+                it.dependsOn(bundled)
             }
         }
     }

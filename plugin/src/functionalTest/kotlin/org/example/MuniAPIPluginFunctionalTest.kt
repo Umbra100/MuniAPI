@@ -25,7 +25,7 @@ class MuniAPIPluginFunctionalTest {
         settingsFile.writeText("")
         buildFile.writeText("""
             plugins {
-                id('org.example.greeting')
+                id('com.github.umbra.muni-api')
             }
         """.trimIndent())
 
@@ -38,6 +38,6 @@ class MuniAPIPluginFunctionalTest {
         val result = runner.build()
 
         // Verify the result
-        assertTrue(result.output.contains("Hello from plugin 'org.example.greeting'"))
+        assertTrue(result.output.contains("Hello from plugin 'com.github.umbra.muni-api'"))
     }
 }

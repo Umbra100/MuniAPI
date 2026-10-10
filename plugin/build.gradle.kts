@@ -18,17 +18,28 @@ repositories {
     mavenCentral()
 }
 
+val embeddedRuntime = configurations.create("embeddedRuntime") {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    isTransitive = false
+}
+
 dependencies {
     // Use the Kotlin Test integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    embeddedRuntime(project(path = ":paper", configuration = "runtimeElements"))
+}
+
+kotlin {
+    jvmToolchain(25)
 }
 
 gradlePlugin {
     plugins {
         register("com.github.umbra.muni-api"){
-            id = "muniapi"
             implementationClass = "com.github.umbra.muniapi.MuniAPIPlugin"
         }
     }
@@ -36,6 +47,7 @@ gradlePlugin {
 
 // Add a source set for the functional test suite
 val functionalTestSourceSet = sourceSets.create("functionalTest") {
+    
 }
 
 configurations["functionalTestImplementation"].extendsFrom(configurations["testImplementation"])
@@ -49,6 +61,14 @@ val functionalTest = tasks.register<Test>("functionalTest") {
 }
 
 gradlePlugin.testSourceSets.add(functionalTestSourceSet)
+
+tasks.processResources {
+    from(embeddedRuntime) {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        into("embedded")
+        rename { "sub.jar" }
+    }
+}
 
 tasks.jar {
     manifest { 

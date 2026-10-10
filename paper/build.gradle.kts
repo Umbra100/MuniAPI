@@ -1,6 +1,7 @@
 // --- Basic Addon Build Settings ---
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
+    java
     application
     // Shadow plugin for creating fatjars
     // id 'com.gradleup.shadow' version "${shadowjar_version}"
@@ -39,7 +40,7 @@ sourceSets {
             srcDirs("src/main/resources")
         }
     }
-}
+}   
 
 // Apply a specific Java toolchain to ease working on different environments.
 java {
