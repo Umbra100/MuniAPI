@@ -26,10 +26,11 @@ dependencies {
 }
 
 gradlePlugin {
-    // Define the plugin
-    val greeting = plugins.create("greeting") {
-        id = "org.example.greeting"
-        implementationClass = "org.example.MuniAPIPlugin"
+    plugins {
+        register("com.github.umbra.muni-api"){
+            id = "muniapi"
+            implementationClass = "com.github.umbra.muniapi.MuniAPIPlugin"
+        }
     }
 }
 
@@ -48,6 +49,12 @@ val functionalTest = tasks.register<Test>("functionalTest") {
 }
 
 gradlePlugin.testSourceSets.add(functionalTestSourceSet)
+
+tasks.jar {
+    manifest { 
+        attributes("Implementation-Version" to project.version) 
+    }
+}
 
 tasks.named<Task>("check") {
     // Run the functional tests as part of `check`
