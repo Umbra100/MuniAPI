@@ -3,6 +3,7 @@
  */
 package com.github.umbra.muniapi
 
+import com.github.umbra.muniapi.models.Entrypoint
 import com.github.umbra.muniapi.tasks.BuildBundledJar
 import com.github.umbra.muniapi.tasks.ExtractEmbeddedJar
 import org.gradle.api.Project
@@ -10,38 +11,36 @@ import org.gradle.api.Plugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.SourceSetContainer
 
-/**
- * A simple 'hello world' plugin.
- */
 class MuniAPIPlugin: Plugin<Project> {
     override fun apply(project: Project) {
-        // Register a task
-        project.tasks.register("greeting") { task ->
-            task.doLast {
-                println("Hello from plugin 'com.github.umbra.muni-api'")
-            }
-        }
-        
-        val extract = project.tasks.register("extractPaper", ExtractEmbeddedJar::class.java) {
-            it.outputJar.set(project.layout.buildDirectory.file("embedded/paper-embedded.jar"))
-            it.jarName.set("paper-embedded")
-        }
+        val entrypoints = listOf(
+            Entrypoint("paper")
+        )
         
         project.plugins.withType(JavaPlugin::class.java) {
-            // project.dependencies.add("runtimeOnly", project.files(extract.map { it.outputJar }).builtBy(extract))
-            
-            project.tasks.register("bundledPaper", BuildBundledJar::class.java) {
-                val main = project.extensions
-                    .getByType(SourceSetContainer::class.java)
-                    .getByName("main")
-                
-                it.dependsOn(extract)
-                
-                it.archiveFileName.set("paper-bundled.jar")
-                
-                it.sources.from(project.provider { project.zipTree(extract.get().outputJar) })
-                it.sources.from(main.output)
-            }
+            for (entrypoint in entrypoints)
+                registerEntrypoint(project, entrypoint)
         }
+    }
+}
+
+private fun registerEntrypoint(project: Project, entrypoint: Entrypoint) {
+    val nameCapitalized = entrypoint.projectName.replaceFirstChar { c -> c.uppercase() }
+                
+    val main = project.extensions
+        .getByType(SourceSetContainer::class.java)
+        .getByName("main")
+        
+    val extract = project.tasks.register("extract$nameCapitalized", ExtractEmbeddedJar::class.java){
+        it.outputJar.set(project.layout.buildDirectory.file("embedded/${entrypoint.projectName}-embedded.jar"))
+        it.jarName.set("embedded/${entrypoint.projectName}-embedded.jar")
+    }
+    
+    project.tasks.register("bundled$nameCapitalized", BuildBundledJar::class.java) {
+        it.archiveFileName.set("${entrypoint.projectName}-bundled.jar")
+        it.sources.from(project.provider { project.zipTree(extract.get().outputJar) })
+        it.sources.from(main.output)
+        
+        it.dependsOn(extract)
     }
 }
