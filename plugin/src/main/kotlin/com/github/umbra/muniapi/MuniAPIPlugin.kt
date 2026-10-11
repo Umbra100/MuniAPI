@@ -3,9 +3,12 @@
  */
 package com.github.umbra.muniapi
 
+import com.github.umbra.muniapi.tasks.BuildBundledJar
 import com.github.umbra.muniapi.tasks.ExtractEmbeddedJar
 import org.gradle.api.Project
 import org.gradle.api.Plugin
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.SourceSetContainer
 
 /**
  * A simple 'hello world' plugin.
@@ -20,49 +23,25 @@ class MuniAPIPlugin: Plugin<Project> {
         }
         
         val extract = project.tasks.register("extractPaper", ExtractEmbeddedJar::class.java) {
-            it.outputDir.set(project.layout.buildDirectory.dir("embedded"))
+            it.outputJar.set(project.layout.buildDirectory.file("embedded/paper-embedded.jar"))
             it.jarName.set("paper-embedded")
         }
         
-        // val entrypoints = listOf(
-        //     Entrypoint("paper", "paper-entrypoint")
-        // )
-        
-        
-        // val extractTasks = mutableListOf<TaskProvider<ExtractEntrypointTask>>()
-        
-        // for (point in entrypoints){
-        //     val taskName = "extract${point.jarName.replaceFirstChar { c -> c.uppercase() }}"
+        project.plugins.withType(JavaPlugin::class.java) {
+            // project.dependencies.add("runtimeOnly", project.files(extract.map { it.outputJar }).builtBy(extract))
             
-        //     extractTasks.add( project.tasks.register(taskName, ExtractEntrypointTask::class.java) {
-        //         it.outputJar.set(project.layout.buildDirectory.file("plugin/${point.jarName}"))
-        //     })
-        // }
-        
-        // project.plugins.withType(JavaPlugin::class.java) {
-        //     val main = project.extensions
-        //         .getByType(SourceSetContainer::class.java)
-        //         .getByName("main")
-        // }
-        // val extract = project.tasks.register("extractRuntime", ExtractEntrypointTask::class.java) {
-        //     it.outputJar.set(project.layout.buildDirectory.file("plugin/sub.jar"))
-        // }
-        
-        // project.plugins.withType(JavaPlugin::class.java) { 
-        //     project.dependencies.add("runtimeOnly", project.files(extract.map { it.outputJar }).builtBy(extract))
-            
-            
-        //     val bundled = project.tasks.register("bundledJar", Jar::class.java) {
-        //         it.archiveClassifier.set("bundled")
-        //         it.dependsOn(extract)
-        //         it.duplicatesStrategy = DuplicatesStrategy.INCLUDE
-        //         it.from(main.output)
-        //         it.from(project.provider { project.zipTree(extract.get().outputJar) })
-        //     }
-            
-        //     project.tasks.named("build").configure {
-        //         it.dependsOn(bundled)
-        //     }
-        // }
+            project.tasks.register("bundledPaper", BuildBundledJar::class.java) {
+                val main = project.extensions
+                    .getByType(SourceSetContainer::class.java)
+                    .getByName("main")
+                
+                it.dependsOn(extract)
+                
+                it.archiveFileName.set("paper-bundled.jar")
+                
+                it.sources.from(project.provider { project.zipTree(extract.get().outputJar) })
+                it.sources.from(main.output)
+            }
+        }
     }
 }

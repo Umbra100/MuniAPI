@@ -14,19 +14,18 @@ abstract class ExtractEmbeddedJar : DefaultTask() {
     @get:Input
     abstract val jarName: Property<String>
     
-    @get:OutputDirectory
-    abstract val outputDir: DirectoryProperty
+    @get:OutputFile
+    abstract val outputJar: RegularFileProperty
 
     @TaskAction
-    fun extract() {
-        val dir = outputDir.get().asFile.apply { mkdirs() }
-        
+    fun run() {
         val stream = ExtractEmbeddedJar::class.java
             .getResourceAsStream("/embedded/${jarName.get()}.jar")
             ?: error("Embedded jar missing from plugin jar: '${jarName.get()}.jar'")
         
         stream.use { input ->
-            File(dir, "${jarName.get()}.jar").outputStream().use { input.copyTo(it) }
+            outputJar.get().asFile.apply{ parentFile.mkdirs() }
+                .outputStream().use { input.copyTo(it) }
         }
     }
 }
