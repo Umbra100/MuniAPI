@@ -3,6 +3,7 @@
  */
 package com.github.umbra.muniapi
 
+import com.github.umbra.muniapi.tasks.ExtractEmbeddedJar
 import org.gradle.api.Project
 import org.gradle.api.Plugin
 
@@ -16,6 +17,11 @@ class MuniAPIPlugin: Plugin<Project> {
             task.doLast {
                 println("Hello from plugin 'com.github.umbra.muni-api'")
             }
+        }
+        
+        val extract = project.tasks.register("extractPaper", ExtractEmbeddedJar::class.java) {
+            it.outputDir.set(project.layout.buildDirectory.dir("embedded"))
+            it.jarName.set("paper-embedded")
         }
         
         // val entrypoints = listOf(

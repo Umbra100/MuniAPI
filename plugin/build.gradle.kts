@@ -18,19 +18,39 @@ repositories {
     mavenCentral()
 }
 
-val embeddedRuntime = configurations.create("embeddedRuntime") {
-    isCanBeConsumed = false
-    isCanBeResolved = true
-    isTransitive = false
-}
-
 dependencies {
     // Use the Kotlin Test integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
 
-    embeddedRuntime(project(path = ":paper", configuration = "runtimeElements"))
+val embeddedJars = mapOf(
+    ":paper" to "paper-embedded.jar"
+)
+
+embeddedJars.forEach { (proj, jarName) ->
+    val configName = "embedded" + proj.split(":")
+        .filter { it.isNotEmpty() }
+        .joinToString("") { part -> part.replaceFirstChar { it.uppercase() } }
+    
+    val cfg = configurations.create(configName) {
+        isCanBeConsumed = false
+        isCanBeResolved = true
+        isTransitive = false
+    }
+
+    dependencies.add(
+        configName,
+        dependencies.project(mapOf("path" to proj, "configuration" to "runtimeElements"))
+    )
+
+    tasks.processResources {
+        from(cfg) {
+            into("embedded")
+            rename { jarName }
+        }
+    }
 }
 
 kotlin {
@@ -61,14 +81,6 @@ val functionalTest = tasks.register<Test>("functionalTest") {
 }
 
 gradlePlugin.testSourceSets.add(functionalTestSourceSet)
-
-tasks.processResources {
-    from(embeddedRuntime) {
-        duplicatesStrategy = DuplicatesStrategy.INCLUDE
-        into("embedded")
-        rename { "sub.jar" }
-    }
-}
 
 tasks.jar {
     manifest { 

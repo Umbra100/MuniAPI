@@ -1,11 +1,14 @@
-package com.github.umbra.muniapi.tasks.build
+package com.github.umbra.muniapi.tasks
 
 import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.jvm.tasks.Jar
 
@@ -16,9 +19,12 @@ abstract class BuildFinalJar : Jar() {
     @get:InputFiles
     abstract val includeJars: ConfigurableFileCollection
     
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+    
     init {
         group = "build"
-        
+        description = "Bundles any jars provided in settings with the consumer's project code into one jar."
     }
     
     @TaskAction
@@ -28,13 +34,10 @@ abstract class BuildFinalJar : Jar() {
             .getByName("main")
         
         archiveClassifier.set("bundled")
+        archiveBaseName.set( jarName.get() )
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         
         from(main.output)
         from(includeJars)
-    }
-    
-    fun getTaskName(): String {
-        return "bundle${jarName.get().replaceFirstChar { c -> c.uppercase() }}"
     }
 }

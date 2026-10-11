@@ -42,6 +42,7 @@ sourceSets {
     }
 }   
 
+
 // Apply a specific Java toolchain to ease working on different environments.
 java {
     toolchain {
@@ -49,10 +50,18 @@ java {
     }
 }
 
+base {
+    archivesName.set("paper-embedded")
+}
+
 tasks {
     runServer {
         minecraftVersion("26.3")
     }
+}
+
+tasks.named<ProcessResources>("processResources"){
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
 tasks.named<Test>("test") {
